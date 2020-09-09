@@ -7,6 +7,12 @@ cache:
   paths:
     - .m2/repository
 
+stages:
+  - build
+  - test
+  - deploy
+  - container
+
 Build project:
   stage: build
   script:
@@ -26,8 +32,21 @@ Package artifact:
   stage: deploy
   image: bellsoft/liberica-openjdk-alpine:14
   script:
+    - chmod +x mvnw
     - ./mvnw $MAVEN_OPTS package
   artifacts:
     paths:
       - target/*.jar
     expire_in: 7 days
+
+Container project:
+  stage: container
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - "cp $(ls target/*.jar) docker/gitlabci.jar"
+    - cd docker
+    - docker build -t $CI_REGISTRY_IMAGE:my_docker_image
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
+    - docker push $CI_REGISTRY_IMAGE:my_docker_image
