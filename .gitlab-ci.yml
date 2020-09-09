@@ -1,0 +1,21 @@
+image: maven:latest
+
+Build project:
+  stage: build
+  script:
+    - mvn compile
+
+Test project:
+  stage: test
+  script:
+    - mvn test
+
+Package artifact:
+  stage: deploy
+  image: bellsoft/liberica-openjdk-alpine:14
+  script:
+    - ./mvnw package
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 7 days
